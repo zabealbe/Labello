@@ -380,10 +380,15 @@ function loadSample(id) {
         return Promise.resolve();
     }
 
-    saveCurrentSample();
-    paper.project.clear();
-    bufferPoints = [];
-    sceneShapes.value = [];
+    if (currentSampleId.value !== null) {
+        saveCurrentSample();
+        URL.revokeObjectURL(sceneImage.value.source);
+        sceneImage.value.remove();
+        sceneImage.value = null;
+        paper.project.clear();
+        bufferPoints = [];
+        sceneShapes.value = [];
+    }
 
     // Load the image
     return files[id].getFile().then((file) => {
