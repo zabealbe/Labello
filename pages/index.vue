@@ -1,4 +1,7 @@
-<script setup>
+<script>
+definePageMeta({
+    redirect: '/labello',
+})
 </script>
 
 <template>

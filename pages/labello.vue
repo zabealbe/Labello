@@ -76,11 +76,13 @@ class LabelRectangle extends Label {
     static min_points = 2
     static num_points = 2
     constructor(points) {
+        const isComplete = points.length === LabelRectangle.num_points
         super(new paper.Path.Rectangle({
             from: points[0],
             to: points[1],
             strokeColor: "#00ff00",
         }))
+        this.isComplete = isComplete
     }
 
     updateCorner(i, e) {
@@ -105,6 +107,7 @@ class LabelRotatedRectangle extends Label {
     static min_points = 2
     static num_points = 3
     constructor(points) {
+        const isComplete = points.length === LabelRotatedRectangle.num_points
         if (points.length === 2) {
             points.push(points[1].clone())
         }
@@ -127,6 +130,7 @@ class LabelRotatedRectangle extends Label {
             closed: true,
             strokeColor: "#00ff00",
         }))
+        this.isComplete = isComplete
     }
 
     updateCorner(i, e) {
@@ -166,11 +170,13 @@ class LabelPolygon extends Label {
     static min_points = 2
     static num_points = -1
     constructor(points) {
+        const isComplete = points.length === LabelPolygon.num_points
         super(new paper.Path({
             segments: points,
             closed: true,
             strokeColor: "#00ff00",
         }))
+        this.isComplete = isComplete
     }
 
     updateCorner(i, e) {
@@ -266,7 +272,7 @@ function onClick(e) {
     bufferPoints.push(e.point);
 
     // check if the buffer points are enough to draw the shape
-    if (currentShape.value && bufferPoints.length === currentShape.value.constructor.num_points) {
+    if (currentShape.value && currentShape.value.isComplete) {
         currentShape.value.unfocus()
 
         // normalize the coordinates wrt the scene image
@@ -419,9 +425,9 @@ function saveCurrentSample() {
 // draw logic
 function drawShape(type, points, preview = false) {
     const shapeClass = {
-        "LabelRectangle": LabelRectangle,
-        "LabelRotatedRectangle": LabelRotatedRectangle,
-        "LabelPolygon": LabelPolygon
+        [LabelRectangle.name]: LabelRectangle,
+        [LabelRotatedRectangle.name]: LabelRotatedRectangle,
+        [LabelPolygon.name]: LabelPolygon
     }[type];
 
     if (points.length < shapeClass.min_points)
@@ -526,11 +532,11 @@ div#__next {
 <template>
     <div class="menu-bar" v-if="state !== 'idle'">
         <div class="menu-item" :class="{ selected: selectedTool === 'LabelRectangle' }"
-            @click="selectedTool = (selectedTool === 'LabelRectangle') ? '' : 'LabelRectangle'">
+            @click="selectedTool = (selectedTool === LabelRectangle.name) ? '' : LabelRectangle.name">
             <img src="/icons/bounding-box.svg" alt="New Bounding Box" />
         </div>
         <div class="menu-item" :class="{ selected: selectedTool === 'LabelRotatedRectangle' }"
-            @click="selectedTool = (selectedTool === 'LabelRotatedRectangle') ? '' : 'LabelRotatedRectangle'">
+            @click="selectedTool = (selectedTool === LabelRotatedRectangle.name) ? '' : LabelRotatedRectangle.name">
             <img src="/icons/rotated-bounding-box.svg" alt="New Rotated Bounding Box" />
         </div>
         <div class="menu-item" @click="downloadAnnotations">
