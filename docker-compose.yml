@@ -1,0 +1,21 @@
+version: "2.2"
+
+services:
+  labello:
+    image: node:18
+    command: sh -c "npm i --legacy-peer-deps --lockfile-version 3 && npm run build && npm run preview"
+    container_name: labello
+    environment:
+      MONGODB_URI: mongodb://root:root@db:27017/app?authSource=admin
+      NEXT_TELEMETRY_DISABLED: 1
+    expose:
+      - 3000
+    volumes:
+      - ./:/app
+    working_dir: /app
+    networks:
+      - labello
+    restart: unless-stopped
+networks:
+  labello:
+    driver: bridge

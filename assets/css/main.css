@@ -1,0 +1,41 @@
+html,body, #__nuxt, #__layout{
+    margin: 0!important;
+    padding: 0!important;
+    height:100%!important;
+    width: 100%!important;
+  }
+div#__nuxt {
+    display: flex;
+    flex-direction: column;
+}
+
+.top-bar {
+    width: 100%;
+    margin-top: 0;
+    position: relative;
+    min-height: 80px;
+    height: 80px;
+    text-align: right;
+    background: #f8f8f8;
+    z-index: 1;
+}
+
+#title {
+    text-wrap: nowrap;
+    position: absolute;
+    left: 20px;
+    top: 0;
+    display: inline-block;
+    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    font-size: 200%;
+    font-family: "Labello", sans-serif;
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    overflow: hidden;
+}
