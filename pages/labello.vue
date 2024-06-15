@@ -6,16 +6,45 @@ import { showDirectoryPicker, showOpenFilePicker } from 'file-system-access'
 import JSZip from 'jszip'
 import paper from 'paper'
 
-const allowedImageExtensions = ['jpg', 'jpeg', 'png']
-
 const state = ref('idle')
 const currentSampleId = ref(null)
 const canvas = ref(null)
 const gui = ref(null)
+const logger = ref(null)
 
 var files = []
 var labels = {}
 var dataset = []
+
+class Logger {
+    constructor() {
+        this.events = []
+    }
+    log(data) {
+        this.events.push({
+            timestamp: Date.now(),
+            ...data
+        })
+    }
+    download() {
+        if (Object.keys(labels).length === 0) {
+            return;
+        }
+
+        const blob = new Blob([JSON.stringify(this.events, null, 4)], { type: "application/json" });
+
+        const zip = new JSZip();
+        zip.file("metadata.json", blob);
+
+        zip.generateAsync({ type: "blob" }).then((content) => {
+            var url = URL.createObjectURL(content);
+            var a = document.createElement("a");
+            a.href = url;
+            a.download = "metadata.zip";
+            a.click();
+        });
+    }
+}
 
 class Gui {
     constructor() {
@@ -154,6 +183,8 @@ class Gui {
                         fillColor: new paper.Color(0, 0, 0, 0.0001), // trick to make the handles clickable even if they are invisible
                     })
 
+                    corner.handle_index = i
+
                     handles.push(corner)
                 }
 
@@ -190,10 +221,37 @@ class Gui {
                         handles.forEach((corner) => corner.onMouseDrag = (e) => {
                             if (this.objects.listFocus.size > 0 && !ret.hasFocus())
                                 return
+                            logger.value.log({
+                                "type": "drag",
+                                "handle_index": corner.handle_index,
+                                "shape": {
+                                    "type": ret.type,
+                                    "points": ret.points,
+                                }
+                            })
                             ret.updateCorner(handles.indexOf(corner), e)
                             ret.focus()
                         })
                         handles.forEach((corner) => corner.onMouseUp = (e) => {
+                            logger.value.log({
+                                "type": "up",
+                                "handle_index": corner.handle_index,
+                                "shape": {
+                                    "type": ret.type,
+                                    "points": ret.points,
+                                }
+                            })
+                            ret.focus(false)
+                        })
+                        handles.forEach((corner) => corner.onMouseDown = (e) => {
+                            logger.value.log({
+                                "type": "down",
+                                "handle_index": corner.handle_index,
+                                "shape": {
+                                    "type": ret.type,
+                                    "points": ret.points,
+                                }
+                            })
                             ret.focus(false)
                         })
                         ret.show()
@@ -620,9 +678,9 @@ class LabelBoundingBox extends LabelPolygon {
     constructor(cx, cy, w, h) {
         super([
             [cx - w / 2, cy - h / 2],
-            // [cx + w, cy - h],
+            // [cx + w / 2, cy - h / 2],
             [cx + w / 2, cy + h / 2],
-            // [cx - w, cy + h],
+            // [cx - w / 2, cy + h / 2],
         ])
     }
 
@@ -649,10 +707,12 @@ class LabelRotatedBoundingBox extends LabelPolygon {
 
 onMounted(() => {
     gui.value = new Gui()
+    logger.value = new Logger()
 })
 
 onUnmounted(() => {
     gui.value.destroy()
+    logger.value.destroy()
 })
 
 watch([state], () => {
@@ -709,6 +769,7 @@ const DataLoader = {
                     return
 
                 const sample = {
+                    id: sample_id,
                     image: new LabelImage(file),
                     labels: []
                 }
@@ -773,7 +834,7 @@ function downloadAnnotationsYolo(labels) {
 
     const zip = new JSZip();
     blobs.forEach((blob, index) => {
-        const name = files[index].name.split(".")[0] + ".txt";
+        const name = dataset.name.split(".")[0] + ".txt";
         zip.file(name, blob);
     });
 
@@ -791,15 +852,11 @@ function downloadAnnotationsJsonL(labels) {
         return;
     }
 
-    const blobs = Object.keys(labels).map((scene) => {
-        const str = labels[scene].map((label) => JSON.stringify(label)).join("\n");
-        return new Blob([str], { type: "text/plain" });
-    });
-
     const zip = new JSZip();
-    blobs.forEach((blob, index) => {
-        const name = files[index].name.split(".")[0] + ".txt";
-        zip.file(name, blob);
+    dataset.forEach((sample) => {
+        const str = sample.labels.map((label) => JSON.stringify(label)).join("\n");
+        const blob = new Blob([str], { type: "text/plain" })
+        zip.file(sample.name + ".txt", blob);
     });
 
     zip.generateAsync({ type: "blob" }).then((content) => {
@@ -814,6 +871,7 @@ function downloadAnnotationsJsonL(labels) {
 function downloadAnnotations() {
     saveCurrentSample();
     downloadAnnotationsJsonL(labels);
+    logger.value.download()
 }
 
 </script>
