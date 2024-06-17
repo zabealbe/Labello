@@ -193,6 +193,8 @@ class Gui {
                     focus: (value = true) => {
                         path.selected = value
                         if (value) {
+                            path.bringToFront()
+                            handles.forEach((corner) => corner.bringToFront())
                             this.objects.listFocus.add(ret)
                         } else {
                             this.objects.listFocus.delete(ret)
@@ -214,8 +216,10 @@ class Gui {
                             if (this.objects.listFocus.size > 0 && !ret.hasFocus())
                                 return
                             ret.focus()
+                            e.stopPropagation()
                         })
                         handles.forEach((corner) => corner.onMouseLeave = (e) => {
+                            console.log("unfocus")
                             ret.focus(false)
                         })
                         handles.forEach((corner) => corner.onMouseDrag = (e) => {
@@ -231,6 +235,7 @@ class Gui {
                             })
                             ret.updateCorner(handles.indexOf(corner), e)
                             ret.focus()
+                            e.stopPropagation()
                         })
                         handles.forEach((corner) => corner.onMouseUp = (e) => {
                             logger.value.log({
@@ -252,7 +257,7 @@ class Gui {
                                     "points": ret.points,
                                 }
                             })
-                            ret.focus(false)
+                            ret.focus()
                         })
                         ret.show()
                     },
@@ -262,7 +267,11 @@ class Gui {
                         handles.forEach((corner) => corner.onMouseDrag = null)
                     },
                     updateCorner: (i, e) => {
-                        path.segments[i].point = e.point
+                        const points = ret.points.slice()
+
+                        points[i] = e.point
+
+                        ret.points = points
                     },
                     scale: (scale, origin) => {
                         path.scale(scale, origin)
@@ -320,7 +329,7 @@ class Gui {
                 const ret = this.objects.Polygon.new(points, options)
                 ret.type = "rectangle"
                 ret.updateCorner = (i, e) => {
-                    var points = ret.points.slice()
+                    const points = ret.points.slice()
 
                     const corner = e.point
                     const opposite = points[(i + 2) % 4]
