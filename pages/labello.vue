@@ -219,45 +219,44 @@ class Gui {
                             e.stopPropagation()
                         })
                         handles.forEach((corner) => corner.onMouseLeave = (e) => {
-                            console.log("unfocus")
                             ret.focus(false)
                         })
                         handles.forEach((corner) => corner.onMouseDrag = (e) => {
                             if (this.objects.listFocus.size > 0 && !ret.hasFocus())
                                 return
+                            ret.updateCorner(handles.indexOf(corner), e)
+                            ret.focus()
+                            e.stopPropagation()
                             logger.value.log({
                                 "type": "drag",
                                 "handle_index": corner.handle_index,
                                 "shape": {
                                     "type": ret.type,
-                                    "points": ret.points,
+                                    "points": ret.points.map((p) => [p.x, p.y]),
                                 }
                             })
-                            ret.updateCorner(handles.indexOf(corner), e)
-                            ret.focus()
-                            e.stopPropagation()
                         })
                         handles.forEach((corner) => corner.onMouseUp = (e) => {
+                            ret.focus(false)
                             logger.value.log({
                                 "type": "up",
                                 "handle_index": corner.handle_index,
                                 "shape": {
                                     "type": ret.type,
-                                    "points": ret.points,
+                                    "points": ret.points.map((p) => [p.x, p.y]),
                                 }
                             })
-                            ret.focus(false)
                         })
                         handles.forEach((corner) => corner.onMouseDown = (e) => {
+                            ret.focus()
                             logger.value.log({
                                 "type": "down",
                                 "handle_index": corner.handle_index,
                                 "shape": {
                                     "type": ret.type,
-                                    "points": ret.points,
+                                    "points": ret.points.map((p) => [p.x, p.y]),
                                 }
                             })
-                            ret.focus()
                         })
                         ret.show()
                     },
